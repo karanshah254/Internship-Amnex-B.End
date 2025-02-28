@@ -1,0 +1,21 @@
+<configuration>
+    <!-- appender is used to define the type of output, such as ConsoleAppender or FileAppender. -->
+    <appender name="myFutureAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="myFileAppender" class="ch.qos.logback.core.FileAppender">
+        <file>journalApp.log</file>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- root level is used to define the root logger level and the appenders that are attached to it. -->
+    <root level="INFO">
+        <appender-ref ref="myFutureAppender"/>
+        <appender-ref ref="myFileAppender"/>
+    </root>
+</configuration>
