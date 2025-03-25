@@ -1,7 +1,5 @@
 package com.user.backend.controller;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,9 +16,12 @@ import com.user.backend.entity.User;
 import com.user.backend.repository.UserRepository;
 import com.user.backend.service.UserService;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 @RestController
 @RequestMapping("/users")
-@CrossOrigin("*")
+@CrossOrigin("*")	
 public class UserController {
 	@Autowired
 	private UserService userService;
@@ -30,41 +31,34 @@ public class UserController {
 
 	// get list of all users
 	@GetMapping
-	public List<User> getUsers() {
+	public Flux<User> getUsers() {
 		return userService.getAllUsers();
 	}
 
 	// create new user
 	@PostMapping
-	public ResponseEntity<?> createUser(@RequestBody List<User> users) {
-		if (users.size() == 1) {
-			// If only one user is sent, add a single user
-			User savedUser = userService.addUser(users.get(0));
-			return ResponseEntity.ok(savedUser);
-		} else {
-			// If multiple users are sent, add them all
-			List<User> savedUsers = userService.addUsers(users);
-			return ResponseEntity.ok(savedUsers);
-		}
+	public Flux<User> createUser(@RequestBody Flux<User> users) {
+		return userService.addUsers(users);
 	}
 
 	@PutMapping("{srNo}")
-	public ResponseEntity<User> updateUser(@PathVariable int srNo, @RequestBody User updatedUser) {
-		User user = userService.updatedUser(srNo, updatedUser);
-		return (user != null) ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
+	public Mono<ResponseEntity<User>> updateUser(@PathVariable int srNo, @RequestBody User updatedUser) {
+		return userService.updatedUser(srNo, updatedUser)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
 	}
 
 	@DeleteMapping("{srNo}")
-	public void deleteUser(@PathVariable int srNo) {
-		userService.deleteUser(srNo);
+	public Mono<Void> deleteUser(@PathVariable int srNo) {
+		return userService.deleteUser(srNo);
 	}
 
 	@GetMapping("/{srNo}")
-	public ResponseEntity<User> getUserBySrNo(@PathVariable int srNo) {
-		return userRepository.findAll().stream()
-				.filter(user -> user.getSrNo() == srNo)
-				.findFirst()
-				.map(ResponseEntity::ok)
-				.orElseGet(() -> ResponseEntity.notFound().build());
+	public Mono<ResponseEntity<User>> getUserBySrNo(@PathVariable int srNo) {
+		return userRepository.findAll()
+                .filter(user -> user.getSrNo() == srNo)
+                .next()
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
 	}
 }

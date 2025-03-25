@@ -1,6 +1,6 @@
 package com.user.backend.service;
 
-import java.util.List;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,60 +9,67 @@ import org.springframework.transaction.annotation.Transactional;
 import com.user.backend.entity.User;
 import com.user.backend.repository.UserRepository;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 @Service
 public class UserService {
 	@Autowired
 	private UserRepository userRepository;
 
-	public List<User> getAllUsers() {
-		return userRepository.findAll();
+	public Flux<User> getAllUsers() {
+		return userRepository.findAllByOrderBySrNoAsc();
 	}
 
-	public User addUser(User user) {
-		List<User> existingUsers = userRepository.findAll();
-
-		int nextSrNo = existingUsers.size() + 1; // Auto-increment srNo
-		user.setSrNo(nextSrNo);
-		return userRepository.save(user);
+	public Mono<User> addUser(User user) {
+		return userRepository.count()
+	            .map(Long::intValue) // Convert Long to int safely
+	            .flatMap(count -> {
+	                user.setSrNo(count + 1);
+	                return userRepository.save(user);
+	            });
 	}
 
-	public List<User> addUsers(List<User> users) {
-		int nextSrNo = (int) (userRepository.count() + 1);
-
-		for (User user : users) {
-			user.setSrNo(nextSrNo++);
-		}
-
-		return userRepository.saveAll(users);
+	public Flux<User> addUsers(Flux<User> users) {
+		return userRepository.count()
+	            .map(Long::intValue)  // Convert Long to int safely
+	            .flatMapMany(count -> users
+	                    .zipWith(Flux.range(count + 1, Integer.MAX_VALUE), (user, index) -> {
+	                        user.setSrNo(index);
+	                        return user;
+	                    })
+	                    .flatMap(userRepository::save));
 	}
 
-	public User updatedUser(int srNo, User updatedUser) {
-		List<User> users = userRepository.findAll();
-
-		for (User user : users) {
-			if (user.getSrNo() == srNo) {
-				user.setName(updatedUser.getName());
-				user.setGender(updatedUser.getGender());
-				user.setDob(updatedUser.getDob());
-				user.setPincode(updatedUser.getPincode());
-
-				return userRepository.save(user); // Save updated user
-			}
-		}
-		return null;
+	public Mono<User> updatedUser(int srNo, User updatedUser) {
+		return userRepository.findAll()
+                .filter(user -> user.getSrNo() == srNo)
+                .next()
+                .flatMap(existingUser -> {
+                    existingUser.setName(updatedUser.getName());
+                    existingUser.setGender(updatedUser.getGender());
+                    existingUser.setDob(updatedUser.getDob());
+                    existingUser.setPincode(updatedUser.getPincode());
+                    return userRepository.save(existingUser);
+                });
 	}
 
 	@Transactional
-	public void deleteUser(int srno) {
-		userRepository.deleteBySrNo(srno);
-		resetSrNumber();
+	public Mono<Void> deleteUser(int srno) {
+		return userRepository.findAll()
+                .filter(user -> user.getSrNo() == srno)
+                .next()
+                .flatMap(user -> userRepository.delete(user));
 	}
 
-	public void resetSrNumber() {
-		List<User> users = userRepository.findAll();
-		for (int i = 0; i < users.size(); i++) {
-			users.get(i).setSrNo(i + 1); // Reset srNo in sequence
-			userRepository.save(users.get(i));
-		}
+	public Mono<Void> resetSrNumber() {
+		return userRepository.findAll()
+                .index()
+                .flatMap(tuple -> {
+                    User user = tuple.getT2();
+                    user.setSrNo(tuple.getT1().intValue() + 1);
+                    return userRepository.save(user);
+                })
+                .then();
 	}
 }
