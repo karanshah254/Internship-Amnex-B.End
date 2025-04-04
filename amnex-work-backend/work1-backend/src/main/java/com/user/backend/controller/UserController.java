@@ -12,8 +12,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.user.backend.entity.Book;
 import com.user.backend.entity.User;
 import com.user.backend.repository.UserRepository;
+import com.user.backend.service.BookService;
 import com.user.backend.service.UserService;
 
 import reactor.core.publisher.Flux;
@@ -21,7 +23,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/users")
-@CrossOrigin("*")	
+@CrossOrigin("*")
 public class UserController {
 	@Autowired
 	private UserService userService;
@@ -38,14 +40,14 @@ public class UserController {
 	// create new user
 	@PostMapping
 	public Flux<User> createUser(@RequestBody Flux<User> users) {
-		return userService.addUsers(users);
+		return userService.addUsers(users); // not re
 	}
 
 	@PutMapping("{srNo}")
 	public Mono<ResponseEntity<User>> updateUser(@PathVariable int srNo, @RequestBody User updatedUser) {
 		return userService.updatedUser(srNo, updatedUser)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+				.map(ResponseEntity::ok)
+				.defaultIfEmpty(ResponseEntity.notFound().build());
 	}
 
 	@DeleteMapping("{srNo}")
@@ -56,9 +58,19 @@ public class UserController {
 	@GetMapping("/{srNo}")
 	public Mono<ResponseEntity<User>> getUserBySrNo(@PathVariable int srNo) {
 		return userRepository.findAll()
-                .filter(user -> user.getSrNo() == srNo)
-                .next()
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+				.filter(user -> user.getSrNo() == srNo)
+				.next()
+				.map(ResponseEntity::ok)
+				.defaultIfEmpty(ResponseEntity.notFound().build());
 	}
+
+	@Autowired
+	private BookService bookService;
+
+	// GET all books reactive
+	@GetMapping("books")
+	public Flux<Book> getAllBooks() {
+		return bookService.getAllBooks();
+	}
+
 }
