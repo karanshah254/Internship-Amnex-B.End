@@ -1,5 +1,7 @@
 package com.user.backend.service;
 
+import java.time.Duration;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +18,7 @@ public class UserService {
 	private UserRepository userRepository;
 
 	public Flux<User> getAllUsers() {
-		return userRepository.findAllByOrderBySrNoAsc();
+		return userRepository.findAllByOrderBySrNoAsc().delayElements(Duration.ofSeconds(1));
 	}
 
 	public Mono<User> addUser(User user) {

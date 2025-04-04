@@ -1,6 +1,7 @@
 package com.user.backend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,7 +33,7 @@ public class UserController {
 	private UserRepository userRepository;
 
 	// get list of all users
-	@GetMapping
+	@GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<User> getUsers() {
 		return userService.getAllUsers();
 	}
@@ -68,7 +69,7 @@ public class UserController {
 	private BookService bookService;
 
 	// GET all books reactive
-	@GetMapping("books")
+	@GetMapping(value = "books", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<Book> getAllBooks() {
 		return bookService.getAllBooks();
 	}

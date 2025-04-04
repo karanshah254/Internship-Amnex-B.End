@@ -1,7 +1,8 @@
 package com.user.backend.service;
 
+import java.time.Duration;
+
 import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.stereotype.Service;
 import org.springframework.stereotype.Service;
 
 import com.user.backend.entity.Book;
@@ -16,7 +17,7 @@ public class BookService {
     private BookRepository bookRepository;
 
     public Flux<Book> getAllBooks() {
-        return bookRepository.findAll(); // Fetch all books
+        return bookRepository.findAll().delayElements(Duration.ofSeconds(1)); // Fetch all books
     }
 
     public Mono<Book> getBookById(Long id) {
