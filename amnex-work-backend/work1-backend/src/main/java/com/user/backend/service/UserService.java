@@ -18,7 +18,7 @@ public class UserService {
 	private UserRepository userRepository;
 
 	public Flux<User> getAllUsers() {
-		return userRepository.findAllByOrderBySrNoAsc().delayElements(Duration.ofSeconds(1));
+		return userRepository.findAll().delayElements(Duration.ofSeconds(1));
 	}
 
 	public Mono<User> addUser(User user) {
